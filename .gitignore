@@ -1,0 +1,6 @@
+# GitHub Actions
+.github/
+
+# pyenv virtualenv
+.pyenv/
+
