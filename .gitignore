@@ -4,3 +4,10 @@
 # pyenv virtualenv
 .pyenv/
 
+.python-version
+
+logs/
+
+config/
+
+plugins/
