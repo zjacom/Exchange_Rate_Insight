@@ -87,7 +87,7 @@ def load_to_redshift(**kwargs):
 
         insert_sql_template = """
         INSERT INTO kyg8821.exchange_rate (created_at, currency, currency_name, base_rate)
-        VALUES ('{created_at}', '{currency}', '{currency_name}', '{base_rate}');
+        VALUES (TO_DATE('{created_at}', YYYY-MM-DD), '{currency}', '{currency_name}', '{base_rate}');
         """
         hook = PostgresHook(postgres_conn_id='redshift_conn_id')
         hook.run("BEGIN;")
