@@ -22,7 +22,7 @@ dag = DAG(
 )
 
 CREATE_SQL = """
-CREATE TABLE IF NOT EXISTS kyg8821.flight_count (
+CREATE TABLE IF NOT EXISTS kyg8821.flights_count (
     created_at DATE,
     airportCode VARCHAR(5),
     flightCount VARCHAR(5)
@@ -78,7 +78,7 @@ def generate_insert_query(**context):
     pg_hook = PostgresHook(postgres_conn_id='redshift_conn_id')
 
     for key, value in dict_list.items():
-        sql_statement = f"""INSERT INTO kyg8821.flight_count (created_at, airportCode, flightCount) 
+        sql_statement = f"""INSERT INTO kyg8821.flights_count (created_at, airportCode, flightCount) 
         VALUES ('{today_date}', '{key}', '{value}');"""
         logging.info(sql_statement)
         pg_hook.run(sql_statement)
