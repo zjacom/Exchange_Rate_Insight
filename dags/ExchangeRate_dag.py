@@ -169,4 +169,4 @@ t4 = PostgresOperator(
 )
 
 # 의존성 정의
-t0 >> t1 >> t2 >> t3 << t4
+t0 >> t1 >> t2 >> t3 >> t4
