@@ -23,9 +23,9 @@ dag = DAG(
 
 CREATE_SQL = """
 CREATE TABLE IF NOT EXISTS kyg8821.flight_count (
-    created_at varchar(20),
-    airportCode varchar(5),
-    flightCount varchar(5)
+    created_at DATE,
+    airportCode VARCHAR(5),
+    flightCount VARCHAR(5)
 );
 """
 
