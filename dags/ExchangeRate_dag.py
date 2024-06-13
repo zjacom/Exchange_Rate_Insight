@@ -88,10 +88,10 @@ def load_to_redshift(**kwargs):
 
         hook = PostgresHook(postgres_conn_id='redshift_conn_id')
         hook.run("BEGIN;")
-        hook.run("DELETE FROM kyg8821.flight_count;")
+        hook.run("DELETE FROM kyg8821.exchange_rate;")
 
         insert_sql_template = """
-        INSERT INTO kyg8821.exchange_rates (created_at, currency, currency_name, base_rate)
+        INSERT INTO kyg8821.exchange_rate (created_at, currency, currency_name, base_rate)
         VALUES ('{created_at}', '{currency}', '{currency_name}', {base_rate});
         """
 
