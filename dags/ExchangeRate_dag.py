@@ -92,7 +92,7 @@ def load_to_redshift(**kwargs):
 
         insert_sql_template = """
         INSERT INTO kyg8821.exchange_rate (created_at, currency, currency_name, base_rate)
-        VALUES ('{created_at}', '{currency}', '{currency_name}', {base_rate});
+        VALUES ('{created_at}', '{currency}', '{currency_name}', '{base_rate}');
         """
 
         # Create SQL statements for each item in trans_list
