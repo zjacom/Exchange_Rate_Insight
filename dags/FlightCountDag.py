@@ -79,7 +79,7 @@ def generate_insert_query(**context):
 
     for key, value in dict_list.items():
         sql_statement = f"""INSERT INTO kyg8821.flight_count (created_at, airportCode, flightCount) 
-        VALUES ('{today_date}', {key}, {value});"""
+        VALUES ('{today_date}', '{key}', '{value}');"""
         logging.info(sql_statement)
         pg_hook.run(sql_statement)
 
