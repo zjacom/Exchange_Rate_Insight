@@ -81,27 +81,39 @@ def transform_exchange_rate_data(**kwargs):
 
 # 데이터를 Redshift에 적재하는 함수
 def load_to_redshift(**kwargs):
-    trans_list = kwargs['ti'].xcom_pull(task_ids='transform')
-    logging.info("load started")
+    try:
+        trans_list = kwargs['ti'].xcom_pull(task_ids='transform')
+        logging.info("load started")
 
-    insert_sql_template = """
-    INSERT INTO kyg8821.exchange_rates (created_at, currency, currency_name, base_rate)
-    VALUES ('{created_at}', '{currency}', '{currency_name}', {base_rate});
-    """
+        hook = PostgresHook(postgres_conn_id='redshift_conn_id')
+        hook.run("BEGIN;")
+        hook.run("DELETE FROM kyg8821.flight_count;")
 
-    # Create SQL statements for each item in trans_list
-    insert_sql = "\n".join([
-        insert_sql_template.format(
-            created_at=item['created_at'],
-            currency=item['currency'],
-            currency_name=item['currency_name'],
-            base_rate=item['base_rate']
-        ) for item in trans_list
-    ])
+        insert_sql_template = """
+        INSERT INTO kyg8821.exchange_rates (created_at, currency, currency_name, base_rate)
+        VALUES ('{created_at}', '{currency}', '{currency_name}', {base_rate});
+        """
 
-    task_instance = kwargs['ti']
-    task_instance.xcom_push(key='insert_sql', value=insert_sql)
-    logging.info("Generated SQL statements for Redshift load")
+        # Create SQL statements for each item in trans_list
+        insert_sql = "\n".join([
+            insert_sql_template.format(
+                created_at=item['created_at'],
+                currency=item['currency'],
+                currency_name=item['currency_name'],
+                base_rate=item['base_rate']
+            ) for item in trans_list
+        ])
+
+        hook.run("COMMIT;")
+
+        task_instance = kwargs['ti']
+        task_instance.xcom_push(key='insert_sql', value=insert_sql)
+        logging.info("Generated SQL statements for Redshift load")
+    
+    except Exception as error:
+        logging.error(f"Error in generate_insert_query: {error}")
+        hook.run("ROLLBACK;")
+
 
 # 테이블 생성
 CREATE_TABLE_SQL = """
