@@ -69,7 +69,7 @@ def _check_latest(**context):
         context['task_instance'].xcom_push(key='skip_message', value=f"There is already data for {execution_date}.")
         return "skip_load"
     else:
-        return "generate_sql"
+        return "generate_insert_sql"
     
 
 def _skip_load(**context):
