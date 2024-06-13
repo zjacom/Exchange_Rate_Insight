@@ -82,21 +82,17 @@ def transform_exchange_rate_data(**kwargs):
 # 데이터를 Redshift에 적재하는 함수
 def load_to_redshift(**kwargs):
     try:
-
         trans_list = kwargs['ti'].xcom_pull(task_ids='transform')
         logging.info("load started")
-
-        hook = PostgresHook(postgres_conn_id='redshift_conn_id')
-        hook.run("BEGIN;")
-        hook.run("DELETE FROM kyg8821.exchange_rate;")
 
         insert_sql_template = """
         INSERT INTO kyg8821.exchange_rate (created_at, currency, currency_name, base_rate)
         VALUES ('{created_at}', '{currency}', '{currency_name}', '{base_rate}');
         """
+        hook = PostgresHook(postgres_conn_id='redshift_conn_id')
+        hook.run("BEGIN;")
 
         # Create SQL statements for each item in trans_list
-        insert_sql_list = []
         for item in trans_list:
             # None 값을 검사하여 기본값으로 대체
             created_at = item['created_at'] or 'NULL'
@@ -111,14 +107,13 @@ def load_to_redshift(**kwargs):
                 currency_name=currency_name,
                 base_rate=base_rate
             )
-            insert_sql_list.append(sql_statement)
-        insert_sql = "\n".join(insert_sql_list)
 
-        hook.run(insert_sql)
+            hook.run(sql_statement)
+
         hook.run("COMMIT;")
     
         task_instance = kwargs['ti']
-        task_instance.xcom_push(key='insert_sql', value=insert_sql)
+        task_instance.xcom_pull(task_ids='transform')
         
     except Exception as error:
         logging.error(f"Error in generate_insert_query: {error}")
@@ -167,18 +162,12 @@ t2 = PythonOperator(
 )
 
 t3 = PythonOperator(
-    task_id='prepare_sql',
+    task_id='load_to_redshift',
     python_callable=load_to_redshift,
     provide_context=True,
     dag=dag,
 )
 
-t4 = PostgresOperator(
-    task_id='load',
-    postgres_conn_id='redshift_conn_id',
-    sql="{{ ti.xcom_pull(task_ids='prepare_sql', key='insert_sql') }}",
-    dag=dag,
-)
 
 # 의존성 정의
-t0 >> t1 >> t2 >> t3 >> t4
+t0 >> t1 >> t2 >> t3 
