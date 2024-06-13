@@ -2,6 +2,7 @@ from datetime import datetime, timedelta
 from airflow import DAG
 from airflow.operators.python_operator import PythonOperator
 from airflow.providers.postgres.hooks.postgres import PostgresHook
+from airflow.hooks.postgres_hook import PostgresHook
 from airflow.providers.postgres.operators.postgres import PostgresOperator
 from requests.packages.urllib3.exceptions import InsecureRequestWarning
 import pandas as pd
@@ -83,31 +84,24 @@ def load_to_redshift(**kwargs):
     trans_list = kwargs['ti'].xcom_pull(task_ids='transform')
     logging.info("load started")
 
-    def clean_value(value):
-        if value is None:
-            return 'NULL'
-        elif isinstance(value, str):
-            return f"'{value}'"
-        else:
-            return value
-
     insert_sql_template = """
     INSERT INTO kyg8821.exchange_rates (created_at, currency, currency_name, base_rate)
-    VALUES ({created_at}, {currency}, {currency_name}, {base_rate});
+    VALUES ('{created_at}', '{currency}', '{currency_name}', {base_rate});
     """
 
     # Create SQL statements for each item in trans_list
     insert_sql = "\n".join([
         insert_sql_template.format(
-            created_at=clean_value(item['created_at']),
-            currency=clean_value(item['currency']),
-            currency_name=clean_value(item['currency_name']),
-            base_rate=clean_value(item['base_rate'])
+            created_at=item['created_at'],
+            currency=item['currency'],
+            currency_name=item['currency_name'],
+            base_rate=item['base_rate']
         ) for item in trans_list
     ])
 
     task_instance = kwargs['ti']
     task_instance.xcom_push(key='insert_sql', value=insert_sql)
+    logging.info("Generated SQL statements for Redshift load")
 
 # 테이블 생성
 CREATE_TABLE_SQL = """
@@ -151,12 +145,19 @@ t2 = PythonOperator(
     dag=dag,
 )
 
-t3 = PostgresOperator(
+t3 = PythonOperator(
+    task_id='prepare_sql',
+    python_callable=load_to_redshift,
+    provide_context=True,
+    dag=dag,
+)
+
+t4 = PostgresOperator(
     task_id='load',
     postgres_conn_id='redshift_conn_id',
-    sql = "{{ ti.xcom_pull(task_ids='load', key='insert_sql') }}",
+    sql="{{ ti.xcom_pull(task_ids='prepare_sql', key='insert_sql') }}",
     dag=dag,
 )
 
 # 의존성 정의
-t0 >> t1 >> t2 >> t3
+t0 >> t1 >> t2 >> t3 << t4
