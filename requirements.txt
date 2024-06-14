@@ -36,7 +36,6 @@ mdurl==0.1.2
 more-itertools==10.2.0
 multidict==6.0.5
 numpy==1.26.4
-ordered-set==4.1.0
 packaging==24.0
 pandas==2.2.2
 pathspec==0.12.1
