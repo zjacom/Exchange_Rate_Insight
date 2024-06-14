@@ -1,25 +1,20 @@
 from airflow import DAG
 from airflow.operators.python import PythonOperator
 from airflow.providers.postgres.operators.postgres import PostgresOperator
-from airflow.models import Variable
 from airflow.providers.postgres.hooks.postgres import PostgresHook
-from airflow.models import TaskInstance
 
-from datetime import datetime, timedelta
+from datetime import datetime
 import requests
 import logging
-import psycopg2
 import json
 import pendulum
 kst = pendulum.timezone("Asia/Seoul")
-
 dag = DAG(
     dag_id='getFlightCountDAG',
     start_date=datetime(2024, 6, 12, tzinfo=kst),
     schedule=None,
     catchup=False
 )
-
 CREATE_SQL = """
 CREATE TABLE IF NOT EXISTS kyg8821.flights_count (
     created_at DATE,
@@ -57,7 +52,7 @@ def extract(**context):
 
 
 def transform(**context):
-    data_list = context['ti'].xcom_pull(task_ids=f'flightCount_extract')
+    data_list = context['ti'].xcom_pull(task_ids='flightCount_extract')
     logging.info("got extract return value")
 
     logging.info("Transform started")
@@ -73,7 +68,7 @@ def transform(**context):
 
 def generate_insert_query(**context):
 
-    dict_list = context['ti'].xcom_pull(task_ids=f'flightCount_transform')
+    dict_list = context['ti'].xcom_pull(task_ids='flightCount_transform')
     today_date = datetime.now().strftime('%Y-%m-%d')
 
     # pg_hook = PostgresHook(postgres_conn_id="3rd-Project")

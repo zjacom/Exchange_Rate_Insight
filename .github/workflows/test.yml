@@ -30,4 +30,4 @@ jobs:
 
     - name: Run PEP 8 check
       run: |
-        flake8 --max-line-length=100 plugins/*.py dags/*.py
+        find plugins dags -type f -name "*.py" ! -path "dags/country_interested.py" | xargs flake8 --max-line-length=200

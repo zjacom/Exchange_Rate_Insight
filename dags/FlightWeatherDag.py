@@ -1,14 +1,11 @@
 from airflow import DAG
 from airflow.operators.python import PythonOperator
 from airflow.providers.postgres.operators.postgres import PostgresOperator
-from airflow.models import Variable
 from airflow.providers.postgres.hooks.postgres import PostgresHook
-from airflow.models import TaskInstance
 
-from datetime import datetime, timedelta
+from datetime import datetime
 import requests
 import logging
-import psycopg2
 import json
 import pendulum
 kst = pendulum.timezone("Asia/Seoul")
@@ -20,7 +17,6 @@ dag = DAG(
     # schedule_interval= '10 0 * * *',
     catchup=False
 )
-
 CREATE_QUERY = """
 CREATE TABLE IF NOT EXISTS flight_weather (
     created_at varchar(20),
@@ -61,7 +57,7 @@ def extract(**context):
 
 
 def transform(**context):
-    data_list = context['ti'].xcom_pull(task_ids=f'flightWeather_extract')
+    data_list = context['ti'].xcom_pull(task_ids='flightWeather_extract')
     logging.info("got extract return value")
     trans_list = []
     logging.info("Transform started")

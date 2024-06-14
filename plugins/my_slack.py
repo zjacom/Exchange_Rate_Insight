@@ -10,7 +10,8 @@ def on_failure_callback(context):
 
 
 def send_message_to_a_slack_channel(message, emoji):
-    url = "https://hooks.slack.com/services/"+Variable.get("slack_access_token_zjacom")
+    url = "https://hooks.slack.com/services/" + \
+        Variable.get("slack_access_token_zjacom")
     headers = {
         'content-type': 'application/json',
     }

@@ -1,18 +1,14 @@
-from datetime import datetime, timedelta
+from datetime import datetime
 from airflow import DAG
 from airflow.operators.python_operator import PythonOperator
 from airflow.providers.postgres.hooks.postgres import PostgresHook
-from airflow.hooks.postgres_hook import PostgresHook
 from airflow.providers.postgres.operators.postgres import PostgresOperator
 from requests.packages.urllib3.exceptions import InsecureRequestWarning
 import pandas as pd
 import requests
-import psycopg2
 import logging
-import json
 import pendulum
 kst = pendulum.timezone("Asia/Seoul")
-
 requests.packages.urllib3.disable_warnings(InsecureRequestWarning)
 
 
