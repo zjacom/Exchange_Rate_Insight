@@ -10,8 +10,9 @@ import json
 import pendulum
 kst = pendulum.timezone("Asia/Seoul")
 dag = DAG(
-    dag_id = 'getFlightCountDAG',
+    dag_id='getFlightCountDAG',
     start_date = datetime(2024,6,12, tzinfo=kst),
+    schedule= None,
     schedule_interval= '10 0 * * *',
     catchup = False
 )

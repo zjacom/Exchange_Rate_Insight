@@ -72,6 +72,7 @@ x-airflow-common:
     # WARNING: Use _PIP_ADDITIONAL_REQUIREMENTS option ONLY for a quick checks
     # for other purpose (development, test and especially production usage) build/extend Airflow image.
     _PIP_ADDITIONAL_REQUIREMENTS: ${_PIP_ADDITIONAL_REQUIREMENTS:- pytrends}
+    TZ: Asia/Seoul
   volumes:
     - ${AIRFLOW_PROJ_DIR:-.}/dags:/opt/airflow/dags
     - ${AIRFLOW_PROJ_DIR:-.}/logs:/opt/airflow/logs
@@ -92,6 +93,7 @@ services:
       POSTGRES_USER: airflow
       POSTGRES_PASSWORD: airflow
       POSTGRES_DB: airflow
+      TZ: Asia/Seoul
     volumes:
       - postgres-db-volume:/var/lib/postgresql/data
     healthcheck:
@@ -112,6 +114,8 @@ services:
       retries: 50
       start_period: 30s
     restart: always
+    environment:
+      TZ: Asia/Seoul
 
   airflow-webserver:
     <<: *airflow-common
