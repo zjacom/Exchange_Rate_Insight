@@ -20,7 +20,7 @@ dag = DAG(
     dag_id="country_interested",
     start_date=datetime(2024, 6, 12, tzinfo=kst),
     schedule_interval='10 0 * * *',
-    catchup=False,
+    catchup=True,
 )
 CREATE_TABLE_SQL = """
 CREATE TABLE IF NOT EXISTS kyg8821.trends_metrics (
