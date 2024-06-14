@@ -24,10 +24,17 @@ jobs:
         python -m pip install --upgrade pip
         pip install -r requirements.txt
 
-    - name: Run tests
+    - name: Run dag integrity tests
       run: |
         pytest --maxfail=1 --disable-warnings
 
     - name: Run PEP 8 check
       run: |
         find plugins dags -type f -name "*.py" ! -path "dags/country_interested.py" | xargs flake8 --max-line-length=200
+
+    - name: Create Pull Request
+      if: success()
+      uses: repo-sync/pull-request@v3
+      with:
+        destination_branch: main
+        github_token: ${{ secrets.GITHUB_TOKEN }}
