@@ -33,7 +33,7 @@ jobs:
         find plugins dags -type f -name "*.py" ! -path "dags/country_interested.py" | xargs flake8 --max-line-length=200
 
   create-pull-request:
-    needs: test-and-lint
+    needs: test
     runs-on: ubuntu-latest
     if: success()
 
