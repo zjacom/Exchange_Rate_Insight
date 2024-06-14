@@ -23,14 +23,14 @@ dag = DAG(
 )
 
 CREATE_QUERY = """
-CREATE TABLE IF NOT EXISTS flight_weather (
-    created_at varchar(20),
+CREATE TABLE IF NOT EXISTS destFlight_weather (
+    created_at DATE,
     flightId varchar(10),
     airportCode varchar(5),
-    humidity varchar(10),
-    temp varchar(10),
-    senstemp varchar(10),
-    wind varchar(10)
+    humidity INT DEFAULT 0,
+    temp FLOAT DEFAULT 0,
+    senstemp FLOAT DEFAULT 0,
+    wind FLOAT DEFAULT 0
 );
 """
 
@@ -78,19 +78,30 @@ def generate_insert_query(**context):
         # pg_hook = PostgresHook(postgres_conn_id="3rd-Project")
         pg_hook = PostgresHook(postgres_conn_id='redshift_conn_id')
 
-        pg_hook.run("BEGIN;")
-
         for trans_item in trans_list:
             for item in trans_item["response"]["body"]["items"]:
-                sql_statement = f"""INSERT INTO kyg8821.flight_weather (created_at, flightId, airportCode, humidity, temp, senstemp, wind)
-                                   VALUES ('{today_date}', '{item['flightId']}', '{item['airportCode']}', '{item['himidity']}', '{item['temp']}', '{item['senstemp']}', '{item['wind']}');"""
-                pg_hook.run(sql_statement)
+                h = '0'
+                if item['himidity'] is not None:
+                    h = item['himidity']
 
-        pg_hook.run("COMMIT;")
+                t = '0'
+                if item['temp'] is not None:
+                    t = item['temp']
+
+                s = '0'
+                if item['senstemp'] is not None:
+                    s = item['senstemp']
+
+                w = '0'
+                if item['wind'] is not None:
+                    w = item['wind']
+                
+                sql_statement = f"""INSERT INTO kyg8821.destFlight_weather (created_at, flightId, airportCode, humidity, temp, senstemp, wind)
+                                   VALUES ('{today_date}', '{item['flightId']}', '{item['airportCode']}', {int(h)}, {float(t)}, {float(s)}, {float(w)});"""
+                pg_hook.run(sql_statement)
 
     except Exception as error:
         logging.error(f"Error in generate_insert_query: {error}")
-        pg_hook.run("ROLLBACK;")
     
     logging.info("Generate is Finish")
 
