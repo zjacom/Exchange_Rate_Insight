@@ -11,15 +11,16 @@ import pendulum
 kst = pendulum.timezone("Asia/Seoul")
 dag = DAG(
     dag_id='getFlightCountDAG',
-    start_date=datetime(2024, 6, 12, tzinfo=kst),
+    start_date = datetime(2024,6,12, tzinfo=kst),
+    schedule= None,
     schedule_interval= '10 0 * * *',
-    catchup=False
+    catchup = False
 )
 CREATE_SQL = """
-CREATE TABLE IF NOT EXISTS kyg8821.flights_count (
+CREATE TABLE IF NOT EXISTS kyg8821.flight_number (
     created_at DATE,
     airportCode VARCHAR(5),
-    flightCount VARCHAR(5)
+    flightCount INT DEFAULT 0
 );
 """
 
@@ -75,8 +76,8 @@ def generate_insert_query(**context):
     pg_hook = PostgresHook(postgres_conn_id='redshift_conn_id')
 
     for key, value in dict_list.items():
-        sql_statement = f"""INSERT INTO kyg8821.flights_count (created_at, airportCode, flightCount)
-        VALUES ('{today_date}', '{key}', '{value}');"""
+        sql_statement = f"""INSERT INTO kyg8821.flight_number (created_at, airportCode, flightCount) 
+        VALUES ('{today_date}', '{key}', '{int(value)}');"""
         logging.info(sql_statement)
         pg_hook.run(sql_statement)
 
