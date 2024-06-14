@@ -74,8 +74,8 @@ def generate_insert_query(**context):
     dict_list = context['ti'].xcom_pull(task_ids=f'flightCount_transform')
     today_date = datetime.now().strftime('%Y-%m-%d')
 
-    pg_hook = PostgresHook(postgres_conn_id="3rd-Project")
-    # pg_hook = PostgresHook(postgres_conn_id='redshift_conn_id')
+    # pg_hook = PostgresHook(postgres_conn_id="3rd-Project")
+    pg_hook = PostgresHook(postgres_conn_id='redshift_conn_id')
 
     for key, value in dict_list.items():
         sql_statement = f"""INSERT INTO kyg8821.flight_number (created_at, airportCode, flightCount) 
@@ -89,8 +89,8 @@ def generate_insert_query(**context):
 # flight_count 테이블 생성
 createFlightCountTable = PostgresOperator(
     task_id = "create_flightCount_table",
-    postgres_conn_id = "3rd-Project",
-    # postgres_conn_id = 'redshift_conn_id',
+    # postgres_conn_id = "3rd-Project",
+    postgres_conn_id = 'redshift_conn_id',
     sql=CREATE_SQL,
     dag = dag)
 
