@@ -1,4 +1,9 @@
+import os
+import sys
+# Airflow가 실행되는 경로에서 plugins 폴더를 찾을 수 있도록 경로를 설정
+sys.path.append(os.path.join(os.path.dirname(__file__), '..', 'plugins'))
 from my_slack import send_message_to_a_slack_channel, on_failure_callback
+
 import pendulum
 import logging
 from airflow import DAG
@@ -9,10 +14,6 @@ from airflow.providers.postgres.operators.postgres import PostgresOperator
 from datetime import datetime, timedelta
 from pytrends.request import TrendReq
 
-import os
-import sys
-# Airflow가 실행되는 경로에서 plugins 폴더를 찾을 수 있도록 경로를 설정
-sys.path.append(os.path.join(os.path.dirname(__file__), '..', 'plugins'))
 kst = pendulum.timezone("Asia/Seoul")
 
 dag = DAG(
