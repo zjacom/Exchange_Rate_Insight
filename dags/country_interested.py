@@ -1,6 +1,6 @@
+from my_slack import send_message_to_a_slack_channel, on_failure_callback
 import pendulum
 import logging
-from my_slack import send_message_to_a_slack_channel, on_failure_callback
 from airflow import DAG
 from airflow.exceptions import AirflowFailException
 from airflow.operators.python import PythonOperator, BranchPythonOperator
