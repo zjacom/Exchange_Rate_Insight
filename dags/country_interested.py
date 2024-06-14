@@ -4,8 +4,15 @@ from airflow.operators.python import PythonOperator, BranchPythonOperator
 from airflow.providers.postgres.hooks.postgres import PostgresHook
 from airflow.providers.postgres.operators.postgres import PostgresOperator
 from datetime import datetime, timedelta
-from plugins import slack
 from pytrends.request import TrendReq
+
+import os
+import sys
+
+# Airflow가 실행되는 경로에서 plugins 폴더를 찾을 수 있도록 경로를 설정
+sys.path.append(os.path.join(os.path.dirname(__file__), '..', 'plugins'))
+
+from my_slack import send_message_to_a_slack_channel, on_failure_callback
 
 import logging
 import pendulum
@@ -74,7 +81,7 @@ def _check_latest(**context):
 
 def _skip_load(**context):
     message = context['task_instance'].xcom_pull(task_ids='check_latest', key='skip_message')
-    slack.send_message_to_a_slack_channel(message, ":scream:")
+    send_message_to_a_slack_channel(message, ":scream:")
 
 
 def _generate_insert_sql(**context):
@@ -100,7 +107,7 @@ fetch_data = PythonOperator(
     task_id='fetch_data',
     python_callable=_fetch_data,
     provide_context=True,
-    on_failure_callback=slack.on_failure_callback,
+    on_failure_callback=on_failure_callback,
     retries=3,
     retry_delay=timedelta(minutes=10),
     dag=dag
