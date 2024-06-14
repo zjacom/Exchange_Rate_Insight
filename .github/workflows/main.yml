@@ -1,5 +1,7 @@
 name: Remote update execution
 on:
+  push:
+    branches: [ "main" ]
   pull_request:
     branches: [ "main" ]
 
