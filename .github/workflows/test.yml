@@ -49,3 +49,4 @@ jobs:
         title: "Automated PR from develop to main"
         body: "This PR is created automatically to merge changes from develop to main after passing all tests and linting."
         labels: "automerge"
+        token: ${{ secrets.PERSONAL_ACCESS_TOKEN }}
