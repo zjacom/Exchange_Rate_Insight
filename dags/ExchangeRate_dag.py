@@ -11,10 +11,10 @@ import psycopg2
 import logging
 import json
 import pendulum
-
 kst = pendulum.timezone("Asia/Seoul")
 
 requests.packages.urllib3.disable_warnings(InsecureRequestWarning)
+
 
 def get_Redshift_connection():
     hook = PostgresHook(postgres_conn_id='redshift_conn_id')
@@ -29,6 +29,8 @@ authkey = "gTWRziBmxj7ZYtcT2HCGzidgXcNC787u"
 searchdate = datetime.now().strftime('%Y%m%d')
 
 # 환율 API에서 데이터 추출
+
+
 def extract_data(authkey, searchdate=None):
     logging.info("Extract started")
     url = "https://www.koreaexim.go.kr/site/program/financial/exchangeJSON"
@@ -42,19 +44,21 @@ def extract_data(authkey, searchdate=None):
     response = requests.get(url, params=params, verify=False)
     if response.status_code == 200:
         exchange_rates = response.json()
-        filtered_rates = [rate for rate in exchange_rates if rate.get('cur_unit') in ['JPY(100)', 'AUD', 'THB', 'SGD', 'EUR']]
+        filtered_rates = [rate for rate in exchange_rates if rate.get(
+            'cur_unit') in ['JPY(100)', 'AUD', 'THB', 'SGD', 'EUR']]
         logging.info("Extract done")
         return filtered_rates
     else:
         logging.error(f"API 호출에 실패했습니다. Status Code: {response.status_code}")
         return None
-    
+
 # 데이터를 변환하는 함수
+
+
 def transform_exchange_rate_data(**kwargs):
     ti = kwargs['ti']
     filtered_rates = ti.xcom_pull(task_ids='extract')
     searchdate = kwargs['execution_date'].strftime('%Y%m%d')
-
 
     trans_list = []
     logging.info("Transform started")
@@ -70,7 +74,8 @@ def transform_exchange_rate_data(**kwargs):
         df['base_rate'] = df['base_rate'].str.replace(',', '').astype(float)
 
         df["created_at"] = searchdate  # 날짜 컬럼 추가
-        columns = ["created_at"] + [col for col in df.columns if col != "created_at"]
+        columns = ["created_at"] + \
+            [col for col in df.columns if col != "created_at"]
         df = df[columns]
         for _, row in df.iterrows():
             trans_list.append(row.to_dict())
@@ -80,6 +85,8 @@ def transform_exchange_rate_data(**kwargs):
     return trans_list
 
 # 데이터를 Redshift에 적재하는 함수
+
+
 def load_to_redshift(**kwargs):
     try:
         trans_list = kwargs['ti'].xcom_pull(task_ids='transform')
@@ -102,7 +109,8 @@ def load_to_redshift(**kwargs):
 
             # SQL 문 생성 후 리스트에 추가
             sql_statement = insert_sql_template.format(
-                created_at=datetime.strptime(created_at, '%Y%m%d').strftime('%Y-%m-%d'),
+                created_at=datetime.strptime(
+                    created_at, '%Y%m%d').strftime('%Y-%m-%d'),
                 currency=currency,
                 currency_name=currency_name,
                 base_rate=base_rate
@@ -111,13 +119,14 @@ def load_to_redshift(**kwargs):
             hook.run(sql_statement)
 
         hook.run("COMMIT;")
-    
+
         task_instance = kwargs['ti']
         task_instance.xcom_pull(task_ids='transform')
-        
+
     except Exception as error:
         logging.error(f"Error in generate_insert_query: {error}")
         hook.run("ROLLBACK;")
+
 
 # 테이블 생성
 CREATE_TABLE_SQL = """
@@ -130,19 +139,19 @@ CREATE TABLE IF NOT EXISTS kyg8821.exchange_rate (
 """
 
 dag = DAG(
-    dag_id = 'ExchangeRate_dag',
-    description = '환율 API로부터 데이터를 가져와 Redshift에 저장하는 DAG',
-    start_date = datetime(2024, 6, 12, tzinfo=kst),
-    tags = ["exchange_rate"],
-    catchup = True,
-    schedule = '0 12 * * *',  # 매일 오후 12시에 실행
+    dag_id='ExchangeRate_dag',
+    description='환율 API로부터 데이터를 가져와 Redshift에 저장하는 DAG',
+    start_date=datetime(2024, 6, 12, tzinfo=kst),
+    tags=["exchange_rate"],
+    catchup=True,
+    schedule='0 12 * * *',  # 매일 오후 12시에 실행
 )
 
 # 작업 정의
 t0 = PostgresOperator(
     task_id='create_table',
     postgres_conn_id='redshift_conn_id',
-    sql = CREATE_TABLE_SQL,
+    sql=CREATE_TABLE_SQL,
     dag=dag,
 )
 
@@ -170,4 +179,4 @@ t3 = PythonOperator(
 
 
 # 의존성 정의
-t0 >> t1 >> t2 >> t3 
+t0 >> t1 >> t2 >> t3
