@@ -9,13 +9,12 @@ import logging
 import json
 import pendulum
 kst = pendulum.timezone("Asia/Seoul")
-
 dag = DAG(
-    dag_id = 'getFlightWeatherDAG',
-    start_date = datetime(2024,6,12, tzinfo=kst),
-    schedule= None,
-    schedule_interval= '10 0 * * *',
-    catchup = False
+    dag_id='getFlightWeatherDAG',
+    start_date=datetime(2024, 6, 12, tzinfo=kst),
+    schedule=None,
+    schedule_interval='10 0 * * *',
+    catchup=False
 )
 CREATE_QUERY = """
 CREATE TABLE IF NOT EXISTS destFlight_weather (
@@ -94,14 +93,14 @@ def generate_insert_query(**context):
                 w = '0'
                 if item['wind'] is not None:
                     w = item['wind']
-                
+
                 sql_statement = f"""INSERT INTO kyg8821.destFlight_weather (created_at, flightId, airportCode, humidity, temp, senstemp, wind)
                                    VALUES ('{today_date}', '{item['flightId']}', '{item['airportCode']}', {int(h)}, {float(t)}, {float(s)}, {float(w)});"""
                 pg_hook.run(sql_statement)
 
     except Exception as error:
         logging.error(f"Error in generate_insert_query: {error}")
-    
+
     logging.info("Generate is Finish")
 
 
