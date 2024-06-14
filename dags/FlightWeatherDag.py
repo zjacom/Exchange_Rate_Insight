@@ -11,19 +11,11 @@ import pendulum
 kst = pendulum.timezone("Asia/Seoul")
 
 dag = DAG(
-<<<<<<< HEAD
     dag_id = 'getFlightWeatherDAG',
     start_date = datetime(2024,6,12, tzinfo=kst),
     schedule= None,
     schedule_interval= '10 0 * * *',
     catchup = False
-=======
-    dag_id='getFlightWeatherDAG',
-    start_date=datetime(2024, 6, 12, tzinfo=kst),
-    schedule=None,
-    # schedule_interval= '10 0 * * *',
-    catchup=False
->>>>>>> fad1027b1340cb8c2ccdc43dffea614ae3f237ce
 )
 CREATE_QUERY = """
 CREATE TABLE IF NOT EXISTS destFlight_weather (
@@ -109,12 +101,7 @@ def generate_insert_query(**context):
 
     except Exception as error:
         logging.error(f"Error in generate_insert_query: {error}")
-<<<<<<< HEAD
     
-=======
-        pg_hook.run("ROLLBACK;")
-
->>>>>>> fad1027b1340cb8c2ccdc43dffea614ae3f237ce
     logging.info("Generate is Finish")
 
 
