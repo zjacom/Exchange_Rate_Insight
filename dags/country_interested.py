@@ -36,6 +36,7 @@ CREATE TABLE IF NOT EXISTS kyg8821.trends_metrics (
 
 def _fetch_data(**context):
     execution_date = context['ds']
+    logging.info(execution_date)
     execution_date_dt = datetime.strptime(execution_date, '%Y-%m-%d')
     one_year_ago = execution_date_dt - timedelta(days=365)
     one_year_ago_str = one_year_ago.strftime('%Y-%m-%d')
