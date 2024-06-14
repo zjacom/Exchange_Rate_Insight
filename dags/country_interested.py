@@ -19,7 +19,7 @@ kst = pendulum.timezone("Asia/Seoul")
 dag = DAG(
     dag_id="country_interested",
     start_date=datetime(2024, 6, 12, tzinfo=kst),
-    schedule_interval='10 0 * * *',
+    schedule_interval='0 12 * * *',
     catchup=True,
 )
 CREATE_TABLE_SQL = """
