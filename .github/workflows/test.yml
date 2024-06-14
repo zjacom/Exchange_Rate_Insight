@@ -32,9 +32,20 @@ jobs:
       run: |
         find plugins dags -type f -name "*.py" ! -path "dags/country_interested.py" | xargs flake8 --max-line-length=200
 
+  create-pull-request:
+    needs: test-and-lint
+    runs-on: ubuntu-latest
+    if: success()
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v2
+
     - name: Create Pull Request
-      if: success()
-      uses: repo-sync/pull-request@v3
+      uses: peter-evans/create-pull-request@v5
       with:
-        destination_branch: main
-        github_token: ${{ secrets.GITHUB_TOKEN }}
+        commit-message: "Automated PR from develop to main"
+        branch: main
+        title: "Automated PR from develop to main"
+        body: "This PR is created automatically to merge changes from develop to main after passing all tests and linting."
+        labels: "automerge"
