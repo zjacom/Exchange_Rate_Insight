@@ -1,14 +1,19 @@
+import os
+import sys
+# Airflow가 실행되는 경로에서 plugins 폴더를 찾을 수 있도록 경로를 설정
+sys.path.append(os.path.join(os.path.dirname(__file__), '..', 'plugins'))
+from my_slack import send_message_to_a_slack_channel, on_failure_callback
+
+import pendulum
+import logging
 from airflow import DAG
 from airflow.exceptions import AirflowFailException
 from airflow.operators.python import PythonOperator, BranchPythonOperator
 from airflow.providers.postgres.hooks.postgres import PostgresHook
 from airflow.providers.postgres.operators.postgres import PostgresOperator
 from datetime import datetime, timedelta
-from plugins import slack
 from pytrends.request import TrendReq
 
-import logging
-import pendulum
 kst = pendulum.timezone("Asia/Seoul")
 
 dag = DAG(
@@ -17,7 +22,6 @@ dag = DAG(
     schedule_interval='10 0 * * *',
     catchup=False,
 )
-
 CREATE_TABLE_SQL = """
 CREATE TABLE IF NOT EXISTS kyg8821.trends_metrics (
     created_at date PRIMARY KEY,
@@ -29,8 +33,10 @@ CREATE TABLE IF NOT EXISTS kyg8821.trends_metrics (
 );
 """
 
+
 def _fetch_data(**context):
     execution_date = context['ds']
+    logging.info(execution_date)
     execution_date_dt = datetime.strptime(execution_date, '%Y-%m-%d')
     one_year_ago = execution_date_dt - timedelta(days=365)
     one_year_ago_str = one_year_ago.strftime('%Y-%m-%d')
@@ -38,7 +44,8 @@ def _fetch_data(**context):
     pytrends = TrendReq(hl='ko-KR', tz=540)
     kw_list = ["일본 여행", "호주 여행", "태국 여행", "싱가포르 여행", "영국 여행"]
     timeframe = f'{one_year_ago_str} {execution_date}'
-    pytrends.build_payload(kw_list, cat=0, timeframe=timeframe, geo='KR', gprop='')
+    pytrends.build_payload(
+        kw_list, cat=0, timeframe=timeframe, geo='KR', gprop='')
 
     try:
         interest_over_time_df = pytrends.interest_over_time()
@@ -54,7 +61,7 @@ def _fetch_data(**context):
     except Exception as e:
         logging.info(e)
         raise AirflowFailException(e)
-    
+
     for key, value in metrics.items():
         context['task_instance'].xcom_push(key=key, value=value)
 
@@ -66,21 +73,24 @@ def _check_latest(**context):
     latest_date = pg_hook.get_first(sql=latest_date_sql)[0]
 
     if latest_date and latest_date.strftime('%Y-%m-%d') == execution_date:
-        context['task_instance'].xcom_push(key='skip_message', value=f"There is already data for {execution_date}.")
+        context['task_instance'].xcom_push(
+            key='skip_message', value=f"There is already data for {execution_date}.")
         return "skip_load"
     else:
         return "generate_insert_sql"
-    
+
 
 def _skip_load(**context):
-    message = context['task_instance'].xcom_pull(task_ids='check_latest', key='skip_message')
-    slack.send_message_to_a_slack_channel(message, ":scream:")
+    message = context['task_instance'].xcom_pull(
+        task_ids='check_latest', key='skip_message')
+    send_message_to_a_slack_channel(message, ":scream:")
 
 
 def _generate_insert_sql(**context):
     task_instance = context['task_instance']
-    metrics = {key: task_instance.xcom_pull(task_ids='fetch_data', key=key) for key in ['created_at', 'japan', 'australia', 'thailand', 'singapore', 'england']}
-    
+    metrics = {key: task_instance.xcom_pull(task_ids='fetch_data', key=key) for key in [
+        'created_at', 'japan', 'australia', 'thailand', 'singapore', 'england']}
+
     insert_sql = f"""
     INSERT INTO kyg8821.trends_metrics (created_at, japan, australia, thailand, singapore, england)
     VALUES ('{metrics['created_at']}', {metrics['japan']}, {metrics['australia']}, {metrics['thailand']}, {metrics['singapore']}, {metrics['england']});
@@ -100,7 +110,7 @@ fetch_data = PythonOperator(
     task_id='fetch_data',
     python_callable=_fetch_data,
     provide_context=True,
-    on_failure_callback=slack.on_failure_callback,
+    on_failure_callback=on_failure_callback,
     retries=3,
     retry_delay=timedelta(minutes=10),
     dag=dag
