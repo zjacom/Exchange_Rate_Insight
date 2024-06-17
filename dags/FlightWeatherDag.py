@@ -12,7 +12,6 @@ kst = pendulum.timezone("Asia/Seoul")
 dag = DAG(
     dag_id='getFlightWeatherDAG',
     start_date=datetime(2024, 6, 12, tzinfo=kst),
-    schedule=None,
     schedule_interval='10 0 * * *',
     catchup=False
 )
